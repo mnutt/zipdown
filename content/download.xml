@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE bindings [
+  <!ENTITY % downloadDTD SYSTEM "chrome://mozapps/locale/downloads/downloads.dtd" >
+  %downloadDTD;
+]>
+
+<bindings id="downloadBindings"
+          xmlns="http://www.mozilla.org/xbl"
+          xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+          xmlns:xbl="http://www.mozilla.org/xbl">
+
+  <binding id="download-done-zip" extends="chrome://mozapps/content/downloads/download.xml#download-done">
+    <content>
+      <xul:hbox flex="1">
+        <xul:vbox pack="center">
+          <xul:image class="downloadTypeIcon" validate="always"
+                     xbl:inherits="src=image"/>
+        </xul:vbox>
+        <xul:vbox pack="start" flex="1">
+          <xul:hbox align="center" flex="1">
+            <xul:label xbl:inherits="value=target,tooltiptext=target"
+                       crop="center" flex="1" class="name"/>
+            <xul:label xbl:inherits="value=dateTime,tooltiptext=dateTimeTip"
+                       class="dateTime"/>
+          </xul:hbox>
+          <xul:hbox align="center" flex="1">
+	    <xul:image class="twisty" onclick="toggleList(this)" ondblclick="return false;" />
+	    <xul:label xbl:inherits="value=itemCount"
+                       crop="end" class="itemCount" onclick="toggleList(this)" />
+            <xul:label xbl:inherits="value=status,tooltiptext=statusTip"
+                       crop="end" flex="1" class="status"/>
+          </xul:hbox>
+        </xul:vbox>
+      </xul:hbox>
+    </content>  
+  </binding>
+</bindings>

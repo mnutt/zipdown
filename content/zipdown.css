@@ -1,0 +1,46 @@
+richlistitem[type="download"][state="1"] {
+  -moz-binding: url('chrome://zipdown/content/download.xml#download-done-zip') !important;
+}
+
+richlistitem[type="download"][state="1"] .twisty {
+  /* -moz-appearance: treetwisty; */
+  list-style-image: url("chrome://zipdown/skin/twisty.png");
+  height: 8px;
+  width: 8px;
+  -moz-image-region: rect(2px, 12px, 12px, 0);
+  margin-top: -2px;
+}
+
+richlistbox:focus richlistitem[type="download"][state="1"][selected="true"] .twisty {
+  list-style-image: url("chrome://zipdown/skin/twisty-w.png");
+}
+
+richlistitem[type="download"][state="1"][expanded="true"] .twisty {
+  /* list-style-image: url("chrome://zipdown/skin/twisty-w.png"); */
+  -moz-image-region: rect(4px, 28px, 14px, 18px);
+}
+
+richlistitem[type="download"][state="1"] .itemCount {
+  margin: 0 0.3em;
+  font-size: 0.9em;
+}
+
+richlistitem[type="download"][state="1"] listbox {
+  display: none;
+}
+
+richlistitem[type="download"][state="1"][expanded="true"] listbox {
+  display: -moz-grid;
+  overflow-y: hidden;
+  border: 0;
+  margin: 0 -6px -6px -6px;
+  background-color: #FFF;
+}
+
+richlistbox richlistitem[type="download"][state="1"] listbox listitem {
+  padding: 5px;
+}
+
+richlistbox richlistitem[type="download"][state="1"] listbox listitem:not([selected="true"]):nth-child(odd) {
+  background-color: -moz-oddtreerow;
+}

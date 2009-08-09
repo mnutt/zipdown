@@ -1,4 +1,4 @@
 content	zipdown	content/
 locale	zipdown	en-US	locale/en-US/
 skin	zipdown	classic/1.0	skin/
-overlay	chrome://browser/content/browser.xul	chrome://zipdown/content/firefoxOverlay.xul
+overlay	chrome://mozapps/content/downloads/downloads.xul	chrome://zipdown/content/downloadOverlay.xul

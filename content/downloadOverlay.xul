@@ -19,7 +19,7 @@
   - Portions created by the Initial Developer are Copyright (C) 2009
   - the Initial Developer. All Rights Reserved.
   -
-  - Contributor(s):
+  - Contributor(s): Michael Nutt <michael@nuttnet.net>
   -
   - Alternatively, the contents of this file may be used under the terms of
   - either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -35,17 +35,10 @@
   - 
   - ***** END LICENSE BLOCK ***** -->
 
-<?xml-stylesheet href="chrome://zipdown/skin/overlay.css" type="text/css"?>
+<?xml-stylesheet href="chrome://zipdown/content/zipdown.css" type="text/css"?>
 <!DOCTYPE overlay SYSTEM "chrome://zipdown/locale/zipdown.dtd">
 <overlay id="zipdown-overlay"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-  <script src="overlay.js"/>
-  <stringbundleset id="stringbundleset">
-    <stringbundle id="zipdown-strings" src="chrome://zipdown/locale/zipdown.properties"/>
-  </stringbundleset>
-
-  <menupopup id="menu_ToolsPopup">
-    <menuitem id="zipdown-hello" label="&zipdown.label;" 
-              oncommand="zipdown.onMenuItemCommand(event);"/>
-  </menupopup>
+  <script type="application/x-javascript" src="chrome://zipdown/content/zipdownListener.js" />
+  <script type="application/x-javascript" src="chrome://zipdown/content/zipdown.js" />
 </overlay>
