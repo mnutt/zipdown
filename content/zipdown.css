@@ -1,14 +1,15 @@
-richlistitem[type="download"][state="1"] {
+richlistitem[type="download"][state="1"][zip="true"] {
   -moz-binding: url('chrome://zipdown/content/download.xml#download-done-zip') !important;
 }
 
 richlistitem[type="download"][state="1"] .twisty {
   /* -moz-appearance: treetwisty; */
   list-style-image: url("chrome://zipdown/skin/twisty.png");
-  height: 8px;
-  width: 8px;
-  -moz-image-region: rect(2px, 12px, 12px, 0);
-  margin-top: -2px;
+  height: 10px;
+  width: 10px;
+  -moz-image-region: rect(0px, 12px, 12px, 0);
+  margin-top: -4px;
+  margin-right: -2px;
 }
 
 richlistbox:focus richlistitem[type="download"][state="1"][selected="true"] .twisty {
@@ -17,7 +18,8 @@ richlistbox:focus richlistitem[type="download"][state="1"][selected="true"] .twi
 
 richlistitem[type="download"][state="1"][expanded="true"] .twisty {
   /* list-style-image: url("chrome://zipdown/skin/twisty-w.png"); */
-  -moz-image-region: rect(4px, 28px, 14px, 18px);
+  -moz-image-region: rect(2px, 28px, 14px, 16px);
+  margin-top: -1px;
 }
 
 richlistitem[type="download"][state="1"] .itemCount {
@@ -25,22 +27,33 @@ richlistitem[type="download"][state="1"] .itemCount {
   font-size: 0.9em;
 }
 
-richlistitem[type="download"][state="1"] listbox {
+richlistitem[type="download"][state="1"] tree {
   display: none;
 }
 
-richlistitem[type="download"][state="1"][expanded="true"] listbox {
-  display: -moz-grid;
-  overflow-y: hidden;
-  border: 0;
+richlistitem[type="download"][state="1"][expanded="true"] tree {
+  display: -moz-box;
   margin: 0 -6px -6px -6px;
-  background-color: #FFF;
+  border: 0;
 }
 
-richlistbox richlistitem[type="download"][state="1"] listbox listitem {
-  padding: 5px;
+richlistitem[type="download"][state="1"][expanded="true"] tree treecols {
+  height: 0;
 }
 
-richlistbox richlistitem[type="download"][state="1"] listbox listitem:not([selected="true"]):nth-child(odd) {
+richlistitem[type="download"][state="1"][expanded="true"] tree treechildren::-moz-tree-cell-text {
+  padding-left: 39px;
+}
+
+richlistitem[type="download"][state="1"][expanded="true"] tree treechildren::-moz-tree-row(odd) {
   background-color: -moz-oddtreerow;
+}
+
+richlistitem[type="download"][state="1"][expanded="true"] tree treechildren::-moz-tree-row(odd, selected) {
+  background-color: -moz-mac-secondaryhighlight;
+}
+
+richlistitem[type="download"][state="1"][expanded="true"] tree treechildren::-moz-tree-row(odd, selected, focus) {
+  background-color: Highlight;
+  color: HighlightText;
 }

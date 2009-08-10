@@ -25,9 +25,9 @@
                        class="dateTime"/>
           </xul:hbox>
           <xul:hbox align="center" flex="1">
-	    <xul:image class="twisty" onclick="toggleList(this)" ondblclick="return false;" />
+	    <xul:image class="twisty" />
 	    <xul:label xbl:inherits="value=itemCount"
-                       crop="end" class="itemCount" onclick="toggleList(this)" />
+                       class="itemCount" />
             <xul:label xbl:inherits="value=status,tooltiptext=statusTip"
                        crop="end" flex="1" class="status"/>
           </xul:hbox>

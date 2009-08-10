@@ -39,6 +39,8 @@
 <!DOCTYPE overlay SYSTEM "chrome://zipdown/locale/zipdown.dtd">
 <overlay id="zipdown-overlay"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script src="chrome://global/content/nsDragAndDrop.js"/>
+  <script src="chrome://global/content/nsTransferable.js"/>
   <script type="application/x-javascript" src="chrome://zipdown/content/zipdownListener.js" />
   <script type="application/x-javascript" src="chrome://zipdown/content/zipdown.js" />
 </overlay>
