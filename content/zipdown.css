@@ -33,7 +33,7 @@ richlistitem[type="download"][state="1"] tree {
 
 richlistitem[type="download"][state="1"][expanded="true"] tree {
   display: -moz-box;
-  margin: 0 -6px -6px -6px;
+  margin: 5px -6px -6px -6px;
   border: 0;
 }
 

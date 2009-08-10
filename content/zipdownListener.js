@@ -6,9 +6,7 @@
  * This class implements the nsIDownloadProgressListener interface.
  */
 
-  function ZipdownListener(console) {
-    this.console = console;
-  }
+  function ZipdownListener() { }
 
 ZipdownListener.prototype = {
   //////////////////////////////////////////////////////////////////////////////

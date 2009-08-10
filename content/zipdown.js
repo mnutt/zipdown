@@ -9,7 +9,7 @@ var MyDownloadManager = {
 	window[w].toString();
       } catch(e) {}
     }
-    zipdownListener = new ZipdownListener(window._firebug);
+    zipdownListener = new ZipdownListener();
     gDownloadManager.addListener(zipdownListener);
     gDownloadsView.addEventListener("DOMNodeInserted", updateExistingItem, false);
     gDownloadsView.addEventListener("click", deselectTree, false);
@@ -60,6 +60,7 @@ function createListBox(item) {
   tree.setAttribute("ondblclick", "onTreeClicked(event);");
   tree.setAttribute("hidecolumnpicker", "true");
   tree.setAttribute("ondraggesture", "nsDragAndDrop.startDrag(event,fileDragObserver);");
+  tree.setAttribute("context", "zipfilepopup");
   var maxRows = Math.min(20, files.length);
   tree.setAttribute("rows", files.length);
   var treeChildren = document.createElement('treechildren');
@@ -99,7 +100,7 @@ function updateExistingItem(item) {
 function deselectTree(event) {
   if(event.explicitOriginalTarget.tagName == "richlistitem" || event.originalTarget.tagName == "treechildren") {
     var trees = gDownloadsView.getElementsByTagName('tree');
-    window._firebug.log(trees);
+
     if(trees.length > 0) {
       for(var i in trees) {
 	var tree = trees[i];
@@ -110,7 +111,6 @@ function deselectTree(event) {
     } else { return; }
 
   }
-  window._firebug.log(event);
 }
 
 function readEntriesFromZipPath(path) {
@@ -121,27 +121,45 @@ function readEntriesFromZipPath(path) {
   var entries = mZipReader.findEntries(null);
   var files = [];
   while (entries.hasMore()) {
-    files.push(entries.getNext());
+    var filepath = entries.getNext();
+    if(filepath.match(/\.app\/.+/)) { continue; }
+    files.push(filepath);
   }
   return files;
 }
 
-function openFileFromZip(zip, path) {
-  window._firebug.log(zip);
-  window._firebug.log(path);
+function openFileFromZip(zip, path, show) {
   var mZipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(nsIZipReader);
   var zipFile = getLocalFileFromNativePathOrUrl(zip);
-  window._firebug.log(zipFile);
+
+  var isDirectory = false;
+  if(path.match(/\/$/)) {
+    path = path.replace(/\/$/, '');
+    isDirectory = true;
+  }
+
   var f = Components.classes["@mozilla.org/file/directory_service;1"].
              getService(Components.interfaces.nsIProperties).
-             get("TmpD", Components.interfaces.nsIFile);
+             get("TmpD", Components.interfaces.nsILocalFile);
   f.append(path.split('/')[path.split('/').length-1]);
-  f.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0666);
-  window._firebug.log(f);
+
+  // Remove an existing tmp file if it already exists
+  if(f.exists(f.path)) {
+    f.remove(f.path);
+  }
+
+  if(isDirectory) {
+    f.createUnique(Components.interfaces.nsILocalFile.DIRECTORY_TYPE, 0777);
+  } else {
+    f.createUnique(Components.interfaces.nsILocalFile.NORMAL_FILE_TYPE, 0666);
+  }
 
   mZipReader.open(zipFile);
-  mZipReader.extract(path, f);
-  window._firebug.log(f);
+  if(isDirectory) {
+    mZipReader.extract(path+"/", f);
+  } else {
+    mZipReader.extract(path, f);
+  }
 
   if (f.isExecutable()) {
     var dontAsk = false;
@@ -170,9 +188,12 @@ function openFileFromZip(zip, path) {
     }
   }
   try {
-    f.launch();
+    if(show) {
+      f.reveal();
+    } else {
+      f.launch();
+    }
   } catch (ex) {
-    window._firebug.log(ex);
     // if launch fails, try sending it through the system's external
     // file: URL handler
     openExternal(f);
@@ -232,14 +253,26 @@ var fileDragObserver = {
       //event.dataTransfer.dropEffect = "copy";
       //event.dataTransfer.effectAllowed = "copy";
       event.dataTransfer.mozSetDataAt("application/x-moz-file", f, 0);
-      window._firebug.log(f);
-      window._firebug.log(transferData);
-      window._firebug.log(event);
-      window._firebug.log(event.dataTransfer.mozGetDataAt("application/x-moz-file", 0).QueryInterface(Components.interfaces.nsILocalFile));
     } catch(e) {
       alert(e);
     }
   }
 };
+
+function cmd_zipfileOpen(click) {
+  var row = document.popupNode._lastSelectedRow;
+  var treeChildren = document.popupNode;
+  var zipItem = treeChildren.parentNode.parentNode;
+  var path = treeChildren.children[row].children[0].children[0].getAttribute("label");
+  openFileFromZip(zipItem.getAttribute("file"), path);
+}
+
+function cmd_zipfileShow(click) {
+  var row = document.popupNode._lastSelectedRow;
+  var treeChildren = document.popupNode;
+  var zipItem = treeChildren.parentNode.parentNode;
+  var path = treeChildren.children[row].children[0].children[0].getAttribute("label");
+  openFileFromZip(zipItem.getAttribute("file"), path, true);
+}
 
 window.addEventListener("load", function(e) { MyDownloadManager.init(); }, false);

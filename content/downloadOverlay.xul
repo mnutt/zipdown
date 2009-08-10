@@ -43,4 +43,11 @@
   <script src="chrome://global/content/nsTransferable.js"/>
   <script type="application/x-javascript" src="chrome://zipdown/content/zipdownListener.js" />
   <script type="application/x-javascript" src="chrome://zipdown/content/zipdown.js" />
+
+  <popupset>
+    <popup id="zipfilepopup">
+      <menuitem label="Open" oncommand="cmd_zipfileOpen(this);" />
+      <menuitem label="Show in Finder" oncommand="cmd_zipfileShow(this);" />
+    </popup>
+  </popupset>
 </overlay>
