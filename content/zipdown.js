@@ -42,51 +42,41 @@ function toggleList(event) {
   if(event.originalTarget.className == "itemCount" || event.originalTarget.className == "twisty") {
     var listItem = event.originalTarget.parentNode.parentNode.parentNode.parentNode;
     var expanded = (listItem.getAttribute('expanded') == "true");
+
+    // In some instances the parent item loses focus
     listItem.parentNode.focus();
+
     if(expanded) {
       listItem.setAttribute('expanded', "false");
     } else {
-      createListBox(listItem);
+      // The first time the archive is expanded, create the contents tree
+      createZipTree(listItem);
+
       listItem.setAttribute('expanded', "true");
     }
   }
 }
 
-function createListBox(item) {
+function createZipTree(item) {
   if(item.getElementsByTagName('tree').length > 0) { return false; }
 
   var files = readEntriesFromZipPath(item.getAttribute('file'));
 
-  var tree = document.createElement('tree');
-  tree.setAttribute("ondblclick", "onTreeClicked(event);");
-  tree.setAttribute("hidecolumnpicker", "true");
-  tree.setAttribute("ondraggesture", "nsDragAndDrop.startDrag(event,fileDragObserver);");
-  tree.setAttribute("context", "zipfilepopup");
-  var maxRows = Math.min(20, files.length);
+  var tree = document.getElementById("zipCollectionTemplate").children[0].cloneNode(true);
   tree.setAttribute("rows", files.length);
-  var treeChildren = document.createElement('treechildren');
-  var treeCols = document.createElement('treecols');
-  treeCols.setAttribute("orient", "horizontal");
-  var treeCol = document.createElement('treecol');
-  treeCol.setAttribute("label", "Files");
-  treeCol.setAttribute("id", "filename");
-  treeCol.setAttribute('flex', "1");
-  treeCol.setAttribute("hideheader", "true");
-  treeCols.appendChild(treeCol);
-  tree.appendChild(treeCols);
+  var treeChildren = tree.getElementsByTagName("treechildren")[0];
 
   for(var i in files) {
     var file = files[i];
-    var fileItem = document.createElement('treeitem');
-    var fileRow = document.createElement('treerow');
-    var fileCell = document.createElement('treecell');
+    var fileItem = document.getElementById('zipItemTemplate').
+                   getElementsByTagName('treeitem')[0].cloneNode(true);
+
+    var fileCell = fileItem.getElementsByTagName('treecell')[0];
     fileCell.setAttribute('label', file);
-    fileRow.appendChild(fileCell);
-    fileItem.appendChild(fileRow);
+
     treeChildren.appendChild(fileItem);
   }
 
-  tree.appendChild(treeChildren);
   item.appendChild(tree);
 }
 

@@ -50,4 +50,39 @@
       <menuitem label="Show in Finder" oncommand="cmd_zipfileShow(this);" />
     </popup>
   </popupset>
+
+  <content>
+    <!-- A tree containing a list of zip contents -->
+    <template id="zipCollectionTemplate">
+      <tree ondblclick="onTreeClicked(event);" 
+            hidecolumnpicker="true" ondraggesture="nsDragAndDrop.startDrag(event,fileDragObserver);"
+            context="zipfilepopup">
+    
+	<treecols orient="horizontal">
+	  <treecol label="Files" id="filename" flex="1" hideheader="true" />
+	</treecols>
+	
+	<treechildren>
+	</treechildren>
+      </tree>
+    </template>
+
+    <!-- An individual file in the archive -->
+    <template id="zipItemTemplate">
+      <tree>
+	<treecols>
+	  <treecol />
+	</treecols>
+
+	<treechildren>
+	  <treeitem>
+	    <treerow>
+	      <treecell />
+	    </treerow>
+	  </treeitem>
+	</treechildren>
+      </tree>
+    </template>
+  </content>
+    
 </overlay>
