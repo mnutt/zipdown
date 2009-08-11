@@ -16,12 +16,12 @@ var ZipDown = {
     // Catch existing downloads as they are rendered
     gDownloadsView.addEventListener("DOMNodeInserted", this.updateExistingItem, false);
 
-    gDownloadsView.addEventListener("click", this.deselectTree, false);
-    gDownloadsView.addEventListener("click", this.toggleList, false);
+    gDownloadsView.addEventListener("click", this.deselectTreeRows, false);
+    gDownloadsView.addEventListener("click", this.toggleZipList, false);
     gDownloadsView.addEventListener("dblclick", this.ignoreToggle, true);
   },
 
-  toggleList: function(event) {
+  toggleZipList: function(event) {
     if(event.originalTarget.className == "itemCount" || event.originalTarget.className == "twisty") {
       var listItem = event.originalTarget.parentNode.parentNode.parentNode.parentNode;
       var expanded = (listItem.getAttribute('expanded') == "true");
@@ -50,17 +50,19 @@ var ZipDown = {
     var treeChildren = tree.getElementsByTagName("treechildren")[0];
 
     for(var i in files) {
-      var file = files[i];
-      var fileItem = document.getElementById('zipItemTemplate').
-                     getElementsByTagName('treeitem')[0].cloneNode(true);
-
-      var fileCell = fileItem.getElementsByTagName('treecell')[0];
-      fileCell.setAttribute('label', file);
-
+      var fileItem = ZipDown.createZipItem(files[i]);
       treeChildren.appendChild(fileItem);
     }
 
     item.appendChild(tree);
+  },
+
+  createZipItem: function(file) {
+    var fileItem = document.getElementById('zipItemTemplate').
+                   getElementsByTagName('treeitem')[0].cloneNode(true);
+    var fileCell = fileItem.getElementsByTagName('treecell')[0];
+    fileCell.setAttribute('label', file);
+    return fileItem;
   },
 
   updateExistingItem: function(item) {
@@ -71,7 +73,8 @@ var ZipDown = {
     }
   },
 
-  deselectTree: function(event) {
+  // If a regular download is selected, deselect any sub-items of any download
+  deselectTreeRows: function(event) {
     if(event.explicitOriginalTarget.tagName == "richlistitem" || event.originalTarget.tagName == "treechildren") {
       var trees = gDownloadsView.getElementsByTagName('tree');
 
@@ -82,8 +85,7 @@ var ZipDown = {
 	  if(event.originalTarget.parentNode == tree) { continue; }
 	  tree.view.selection.clearSelection();
 	}
-      } else { return; }
-
+      }
     }
   },
 
@@ -102,7 +104,7 @@ var ZipDown = {
     return files;
   },
 
-  openFileFromZip: function(zip, path, show) {
+  getFileFromZip: function(zip, path) {
     var mZipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(nsIZipReader);
     var zipFile = getLocalFileFromNativePathOrUrl(zip);
 
@@ -135,6 +137,17 @@ var ZipDown = {
       mZipReader.extract(path, f);
     }
 
+    return f;
+  },
+
+  revealFileFromZip: function(zip, path) {
+    ZipDown.getFileFromZip(zip, path).reveal();
+  },
+
+  openFileFromZip: function(zip, path) {
+    var f = ZipDown.getFileFromZip(zip, path);
+
+    // Duplicated in downloads.js, unfortunately
     if (f.isExecutable()) {
       var dontAsk = false;
       var pref = Cc["@mozilla.org/preferences-service;1"].
@@ -162,11 +175,7 @@ var ZipDown = {
       }
     }
     try {
-      if(show) {
-	f.reveal();
-      } else {
-	f.launch();
-      }
+      f.launch();
     } catch (ex) {
       // if launch fails, try sending it through the system's external
       // file: URL handler
@@ -246,7 +255,7 @@ var ZipDown = {
     var treeChild = ZipDown.getClickedTreeChildFromContextMenu();
     var zipItem = treeChild.parentNode.parentNode.parentNode;
     var path = treeChild.children[0].children[0].getAttribute("label");
-    ZipDown.openFileFromZip(zipItem.getAttribute("file"), path, true);
+    ZipDown.revealFileFromZip(zipItem.getAttribute("file"), path);
   }
 };
 
