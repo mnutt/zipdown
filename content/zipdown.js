@@ -18,26 +18,6 @@ var MyDownloadManager = {
   }
 };
 
-// Copied from downloads.js
-function getLocalFileFromNativePathOrUrl(aPathOrUrl)
-{
-  if (aPathOrUrl.substring(0,7) == "file://") {
-    // if this is a URL, get the file from that
-    let ioSvc = Cc["@mozilla.org/network/io-service;1"].
-                getService(Ci.nsIIOService);
-
-    // XXX it's possible that using a null char-set here is bad
-    const fileUrl = ioSvc.newURI(aPathOrUrl, null, null).
-                    QueryInterface(Ci.nsIFileURL);
-    return fileUrl.file.clone().QueryInterface(Ci.nsILocalFile);
-  } else {
-    // if it's a pathname, create the nsILocalFile directly
-    var f = new nsLocalFile(aPathOrUrl);
-
-    return f;
-  }
-}
-
 function toggleList(event) {
   if(event.originalTarget.className == "itemCount" || event.originalTarget.className == "twisty") {
     var listItem = event.originalTarget.parentNode.parentNode.parentNode.parentNode;
@@ -238,11 +218,8 @@ var fileDragObserver = {
     mZipReader.open(zipFile);
     mZipReader.extract(path, f);
 
-
     transferData.data = new TransferData();
-      // transferData.data.addDataForFlavour("application/x-moz-file", f, 0);
-      //event.dataTransfer.dropEffect = "copy";
-      //event.dataTransfer.effectAllowed = "copy";
+
       event.dataTransfer.mozSetDataAt("application/x-moz-file", f, 0);
     } catch(e) {
       alert(e);
