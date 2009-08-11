@@ -199,10 +199,6 @@ var ZipDown = {
     return f;
   },
 
-  getmZipReader: function() {
-    return;
-  },
-
   revealFileFromZip: function(zip, path) {
     ZipDown.getFileFromZip(zip, path).reveal();
   },
@@ -258,7 +254,7 @@ var ZipDown = {
 	var path = tree.view.getCellText(row.value, col.value);
 	var zip = tree.parentNode.getAttribute("file");
 
-	var mZipReader = ZipDown.getmZipReader();
+	var mZipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(nsIZipReader);
 	var zipFile = getLocalFileFromNativePathOrUrl(zip);
 	var f = Components.classes["@mozilla.org/file/directory_service;1"].
                 getService(Components.interfaces.nsIProperties).
