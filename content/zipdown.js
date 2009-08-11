@@ -46,6 +46,8 @@ var ZipDown = {
       }
     },
 
+    // Don't try to call the default double click action if we're clicking on the twisty or
+    // label.  This allows rapid expanding/collapsing.
     ignoreToggle: function(event) {
       if(event.originalTarget.className == "itemCount" || event.originalTarget.className == "twisty") {
 	event.cancelBubble = true;
@@ -53,6 +55,7 @@ var ZipDown = {
       }
     },
 
+    // Default action when double clicking an item in the tree is to try to launch it
     doubleClickTree: function(event) {
       if(event.originalTarget.tagName == "treechildren") {
 	var tree = event.originalTarget.parentNode;
@@ -114,7 +117,7 @@ var ZipDown = {
   createZipTree: function(item) {
     if(item.getElementsByTagName('tree').length > 0) { return false; }
 
-    var files = ZipDown.readEntriesFromZipPath(item.getAttribute('file'));
+    var files = ZipDown.readEntriesFromZip(item.getAttribute('file'));
 
     var tree = document.getElementById("zipCollectionTemplate").children[0].cloneNode(true);
     tree.setAttribute("rows", files.length);
@@ -128,6 +131,7 @@ var ZipDown = {
     item.appendChild(tree);
   },
 
+  // Create a dom node for an item in a zip archive
   createZipItem: function(file) {
     var fileItem = document.getElementById('zipItemTemplate').
                    getElementsByTagName('treeitem')[0].cloneNode(true);
@@ -136,15 +140,16 @@ var ZipDown = {
     return fileItem;
   },
 
+  // Update the download item in the download manager with the number of archived files
   updateExistingItem: function(item) {
     if(item.target.getAttribute('file').split('.')[item.target.getAttribute('file').split('.').length-1] == "zip") {
-      var files = ZipDown.readEntriesFromZipPath(item.target.getAttribute('file'));
+      var files = ZipDown.readEntriesFromZip(item.target.getAttribute('file'));
       item.target.setAttribute("zip", "true");
       item.target.setAttribute("itemCount", files.length + " items");
     }
   },
 
-  readEntriesFromZipPath: function(path) {
+  readEntriesFromZip: function(path) {
     var mZipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(nsIZipReader);
     var file = getLocalFileFromNativePathOrUrl(path);
     mZipReader.open(file);
@@ -162,20 +167,20 @@ var ZipDown = {
     return files;
   },
 
-  getFileFromZip: function(zip, path) {
+  getFileFromZip: function(zipPath, filePath) {
     var mZipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(nsIZipReader);
-    var zipFile = getLocalFileFromNativePathOrUrl(zip);
+    var zipFile = getLocalFileFromNativePathOrUrl(zipPath);
 
     var isDirectory = false;
-    if(path.match(/\/$/)) {
-      path = path.replace(/\/$/, '');
+    if(filePath.match(/\/$/)) {
+      filePath = filePath.replace(/\/$/, '');
       isDirectory = true;
     }
 
     var f = Components.classes["@mozilla.org/file/directory_service;1"].
             getService(Components.interfaces.nsIProperties).
             get("TmpD", Components.interfaces.nsILocalFile);
-    f.append(path.split('/')[path.split('/').length-1]);
+    f.append(filePath.split('/')[filePath.split('/').length-1]);
 
     // Remove an existing tmp file if it already exists
     if(f.exists(f.path)) {
@@ -190,21 +195,21 @@ var ZipDown = {
 
     mZipReader.open(zipFile);
     if(isDirectory) {
-      mZipReader.extract(path+"/", f);
+      mZipReader.extract(filePath+"/", f);
     } else {
-      mZipReader.extract(path, f);
+      mZipReader.extract(filePath, f);
     }
     mZipReader.close();
 
     return f;
   },
 
-  revealFileFromZip: function(zip, path) {
-    ZipDown.getFileFromZip(zip, path).reveal();
+  revealFileFromZip: function(zipPath, filePath) {
+    ZipDown.getFileFromZip(zipPath, filePath).reveal();
   },
 
-  openFileFromZip: function(zip, path) {
-    var f = ZipDown.getFileFromZip(zip, path);
+  openFileFromZip: function(zipPath, filePath) {
+    var f = ZipDown.getFileFromZip(zipPath, filePath);
 
     // Duplicated in downloads.js, unfortunately
     if (f.isExecutable()) {
