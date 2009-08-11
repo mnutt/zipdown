@@ -3,14 +3,12 @@ richlistitem[type="download"][state="1"][zip="true"] {
 }
 
 richlistitem[type="download"][state="1"] .twisty {
-  /* -moz-appearance: treetwisty; */
   list-style-image: url("chrome://zipdown/skin/twisty.png");
+  -moz-image-region: rect(0px, 12px, 12px, 0);
+  margin: -4px -4px 0 0;
+  padding: 0 2px 0 0;
   height: 10px;
   width: 10px;
-  -moz-image-region: rect(0px, 12px, 12px, 0);
-  margin-top: -4px;
-  margin-right: -4px;
-  padding-right: 2px;
 }
 
 richlistbox:focus richlistitem[type="download"][state="1"][selected="true"] .twisty {
@@ -18,9 +16,8 @@ richlistbox:focus richlistitem[type="download"][state="1"][selected="true"] .twi
 }
 
 richlistitem[type="download"][state="1"][expanded="true"] .twisty {
-  /* list-style-image: url("chrome://zipdown/skin/twisty-w.png"); */
   -moz-image-region: rect(2px, 28px, 14px, 16px);
-  margin-top: -1px;
+  margin: -1px 0 0;
 }
 
 richlistitem[type="download"][state="1"] .itemCount {
@@ -45,6 +42,9 @@ richlistitem[type="download"][state="1"][expanded="true"] tree treecols {
 richlistitem[type="download"][state="1"][expanded="true"] tree treechildren::-moz-tree-cell-text {
   padding-left: 39px;
 }
+
+
+/* Hack to highlight alternate rows when using hidecolumnpicker=true */
 
 richlistitem[type="download"][state="1"][expanded="true"] tree treechildren::-moz-tree-row(odd) {
   background-color: -moz-oddtreerow;
