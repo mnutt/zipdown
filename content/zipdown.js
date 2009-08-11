@@ -18,6 +18,7 @@ var MyDownloadManager = {
   }
 };
 
+// Copied from downloads.js
 function getLocalFileFromNativePathOrUrl(aPathOrUrl)
 {
   if (aPathOrUrl.substring(0,7) == "file://") {
@@ -259,19 +260,23 @@ var fileDragObserver = {
   }
 };
 
-function cmd_zipfileOpen(click) {
+function getClickedTreeChildFromContextMenu() {
   var row = document.popupNode._lastSelectedRow;
   var treeChildren = document.popupNode;
-  var zipItem = treeChildren.parentNode.parentNode;
-  var path = treeChildren.children[row].children[0].children[0].getAttribute("label");
+  return treeChildren.children[row];
+}
+
+function cmd_zipfileOpen(click) {
+  var treeChild = getClickedTreeChildFromContextMenu();
+  var zipItem = treeChild.parentNode.parentNode.parentNode;
+  var path = treeChild.children[0].children[0].getAttribute("label");
   openFileFromZip(zipItem.getAttribute("file"), path);
 }
 
 function cmd_zipfileShow(click) {
-  var row = document.popupNode._lastSelectedRow;
-  var treeChildren = document.popupNode;
-  var zipItem = treeChildren.parentNode.parentNode;
-  var path = treeChildren.children[row].children[0].children[0].getAttribute("label");
+  var treeChild = getClickedTreeChildFromContextMenu();
+  var zipItem = treeChild.parentNode.parentNode.parentNode;
+  var path = treeChild.children[0].children[0].getAttribute("label");
   openFileFromZip(zipItem.getAttribute("file"), path, true);
 }
 
