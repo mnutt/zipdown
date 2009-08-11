@@ -16,8 +16,7 @@ richlistbox:focus richlistitem[type="download"][state="1"][selected="true"] .twi
 }
 
 richlistitem[type="download"][state="1"][expanded="true"] .twisty {
-  -moz-image-region: rect(2px, 28px, 14px, 16px);
-  margin: -1px 0 0;
+  -moz-image-region: rect(0px, 28px, 12px, 16px);
 }
 
 richlistitem[type="download"][state="1"] .itemCount {
