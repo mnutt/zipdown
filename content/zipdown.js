@@ -4,14 +4,20 @@ var MyDownloadManager = {
   defaultCreateDownloadItem : null,
 
   init : function fdm_init() {
+    // Really weird hack to make window._firebug.log work
     for(var w in window) {
       try {
 	window[w].toString();
       } catch(e) {}
     }
+
+    // Catch new downloads as they appear
     zipdownListener = new ZipdownListener();
     gDownloadManager.addListener(zipdownListener);
+
+    // Catch existing downloads as they are rendered
     gDownloadsView.addEventListener("DOMNodeInserted", updateExistingItem, false);
+
     gDownloadsView.addEventListener("click", deselectTree, false);
     gDownloadsView.addEventListener("click", toggleList, false);
     gDownloadsView.addEventListener("dblclick", ignoreToggle, true);
