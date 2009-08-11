@@ -19,6 +19,7 @@ var ZipDown = {
     gDownloadsView.addEventListener("click", this.deselectTreeRows, false);
     gDownloadsView.addEventListener("click", this.toggleZipList, false);
     gDownloadsView.addEventListener("dblclick", this.ignoreToggle, true);
+    gDownloadsView.addEventListener("dblclick", this.onTreeClicked, true);
   },
 
   toggleZipList: function(event) {
@@ -184,20 +185,23 @@ var ZipDown = {
   },
 
   onTreeClicked: function(event){
-    var tree = event.currentTarget;
-    if(typeof(tree) == "undefined") { return; }
+    if(event.originalTarget.tagName == "treechildren") {
+      var tree = event.originalTarget.parentNode;
+      if(typeof(tree) == "undefined") { return; }
 
-    var tbo = tree.treeBoxObject;
+      var tbo = tree.treeBoxObject;
 
-    // get the row, col and child element at the point
-    var row = { }, col = { }, child = { };
-    tbo.getCellAt(event.clientX, event.clientY, row, col, child);
-    var filename = tree.view.getCellText(row.value, col.value);
+      // get the row, col and child element at the point
+      var row = { }, col = { }, child = { };
+      tbo.getCellAt(event.clientX, event.clientY, row, col, child);
+      var filename = tree.view.getCellText(row.value, col.value);
 
-    var zipname = tree.parentNode.getAttribute("file");
+      var zipname = tree.parentNode.getAttribute("file");
 
-    ZipDown.openFileFromZip(zipname, filename);
-    return false;
+      ZipDown.openFileFromZip(zipname, filename);
+      event.cancelBubble = true;
+      return false;
+    }
   },
 
   ignoreToggle: function(event) {

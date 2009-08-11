@@ -54,8 +54,8 @@
   <content>
     <!-- A tree containing a list of zip contents -->
     <template id="zipCollectionTemplate">
-      <tree ondblclick="ZipDown.onTreeClicked(event);" 
-            hidecolumnpicker="true" ondraggesture="nsDragAndDrop.startDrag(event,ZipDown.fileDragObserver);"
+      <tree hidecolumnpicker="true" 
+            ondraggesture="nsDragAndDrop.startDrag(event,ZipDown.fileDragObserver);"
             context="zipfilepopup">
     
 	<treecols orient="horizontal">
