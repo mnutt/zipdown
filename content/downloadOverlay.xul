@@ -46,16 +46,16 @@
 
   <popupset>
     <popup id="zipfilepopup">
-      <menuitem label="Open" oncommand="cmd_zipfileOpen(this);" />
-      <menuitem label="Show in Finder" oncommand="cmd_zipfileShow(this);" />
+      <menuitem label="Open" oncommand="ZipDown.cmd_zipfileOpen(this);" />
+      <menuitem label="Show in Finder" oncommand="ZipDown.cmd_zipfileShow(this);" />
     </popup>
   </popupset>
 
   <content>
     <!-- A tree containing a list of zip contents -->
     <template id="zipCollectionTemplate">
-      <tree ondblclick="onTreeClicked(event);" 
-            hidecolumnpicker="true" ondraggesture="nsDragAndDrop.startDrag(event,fileDragObserver);"
+      <tree ondblclick="ZipDown.onTreeClicked(event);" 
+            hidecolumnpicker="true" ondraggesture="nsDragAndDrop.startDrag(event,ZipDown.fileDragObserver);"
             context="zipfilepopup">
     
 	<treecols orient="horizontal">
