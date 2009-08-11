@@ -1,7 +1,7 @@
 const nsIZipReader = Components.interfaces.nsIZipReader;
 
 var ZipDown = {
-  init : function fdm_init() {
+  init : function() {
     // Really weird hack to make window._firebug.log work
     for(var w in window) {
       try {
@@ -16,28 +16,98 @@ var ZipDown = {
     // Catch existing downloads as they are rendered
     gDownloadsView.addEventListener("DOMNodeInserted", this.updateExistingItem, false);
 
-    gDownloadsView.addEventListener("click", this.deselectTreeRows, false);
-    gDownloadsView.addEventListener("click", this.toggleZipList, false);
-    gDownloadsView.addEventListener("dblclick", this.ignoreToggle, true);
-    gDownloadsView.addEventListener("dblclick", this.onTreeClicked, true);
+    gDownloadsView.addEventListener("click", this.events.deselectTreeRows, false);
+    gDownloadsView.addEventListener("click", this.events.clickTwistyOrLabel, false);
+    gDownloadsView.addEventListener("dblclick", this.events.ignoreToggle, true);
+    gDownloadsView.addEventListener("dblclick", this.events.doubleClickTree, true);
   },
 
-  toggleZipList: function(event) {
-    if(event.originalTarget.className == "itemCount" || event.originalTarget.className == "twisty") {
-      var listItem = event.originalTarget.parentNode.parentNode.parentNode.parentNode;
-      var expanded = (listItem.getAttribute('expanded') == "true");
-
-      // In some instances the parent item loses focus
-      listItem.parentNode.focus();
-
-      if(expanded) {
-	listItem.setAttribute('expanded', "false");
-      } else {
-	// The first time the archive is expanded, create the contents tree
-	ZipDown.createZipTree(listItem);
-
-	listItem.setAttribute('expanded', "true");
+  events: {
+    clickTwistyOrLabel: function(event) {
+      if(event.originalTarget.className == "itemCount" || event.originalTarget.className == "twisty") {
+	var listItem = event.originalTarget.parentNode.parentNode.parentNode.parentNode;
+	ZipDown.toggleZipList(listItem);
       }
+    },
+
+    // If a regular download is selected, deselect any sub-items of any download
+    deselectTreeRows: function(event) {
+      if(event.explicitOriginalTarget.tagName == "richlistitem" || event.originalTarget.tagName == "treechildren") {
+	var trees = gDownloadsView.getElementsByTagName('tree');
+
+	if(trees.length > 0) {
+	  for(var i in trees) {
+	    var tree = trees[i];
+	    if(typeof(tree.view) == "undefined" || tree.view == null) { continue; }
+	    if(event.originalTarget.parentNode == tree) { continue; }
+	    tree.view.selection.clearSelection();
+	  }
+	}
+      }
+    },
+
+    ignoreToggle: function(event) {
+      if(event.originalTarget.className == "itemCount" || event.originalTarget.className == "twisty") {
+	event.cancelBubble = true;
+	return false;
+      }
+    },
+
+    doubleClickTree: function(event) {
+      if(event.originalTarget.tagName == "treechildren") {
+	var tree = event.originalTarget.parentNode;
+	if(typeof(tree) == "undefined") { return; }
+
+	var tbo = tree.treeBoxObject;
+
+	// get the row, col and child element at the point
+	var row = { }, col = { }, child = { };
+	tbo.getCellAt(event.clientX, event.clientY, row, col, child);
+
+	ZipDown.openTreeFile(tree, row, col);
+
+	event.cancelBubble = true;
+	return false;
+      }
+    },
+
+    context: {
+      zipfileOpen: function(event) {
+	var treeChild = ZipDown.getClickedTreeChildFromContextMenu();
+	var zipItem = treeChild.parentNode.parentNode.parentNode;
+	var path = treeChild.children[0].children[0].getAttribute("label");
+	ZipDown.openFileFromZip(zipItem.getAttribute("file"), path);
+      },
+
+      zipfileShow: function(event) {
+	var treeChild = ZipDown.getClickedTreeChildFromContextMenu();
+	var zipItem = treeChild.parentNode.parentNode.parentNode;
+	var path = treeChild.children[0].children[0].getAttribute("label");
+	ZipDown.revealFileFromZip(zipItem.getAttribute("file"), path);
+      }
+    }
+  },
+
+  openTreeFile: function(tree, row, col){
+    var filename = tree.view.getCellText(row.value, col.value);
+    var zipname = tree.parentNode.getAttribute("file");
+
+    ZipDown.openFileFromZip(zipname, filename);
+  },
+
+  toggleZipList: function(listItem) {
+    var expanded = (listItem.getAttribute('expanded') == "true");
+
+    // In some instances the parent item loses focus
+    listItem.parentNode.focus();
+
+    if(expanded) {
+      listItem.setAttribute('expanded', "false");
+    } else {
+      // The first time the archive is expanded, create the contents tree
+      ZipDown.createZipTree(listItem);
+
+      listItem.setAttribute('expanded', "true");
     }
   },
 
@@ -74,34 +144,21 @@ var ZipDown = {
     }
   },
 
-  // If a regular download is selected, deselect any sub-items of any download
-  deselectTreeRows: function(event) {
-    if(event.explicitOriginalTarget.tagName == "richlistitem" || event.originalTarget.tagName == "treechildren") {
-      var trees = gDownloadsView.getElementsByTagName('tree');
-
-      if(trees.length > 0) {
-	for(var i in trees) {
-	  var tree = trees[i];
-	  if(typeof(tree.view) == "undefined" || tree.view == null) { continue; }
-	  if(event.originalTarget.parentNode == tree) { continue; }
-	  tree.view.selection.clearSelection();
-	}
-      }
-    }
-  },
-
   readEntriesFromZipPath: function(path) {
     var mZipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(nsIZipReader);
     var file = getLocalFileFromNativePathOrUrl(path);
     mZipReader.open(file);
-
     var entries = mZipReader.findEntries(null);
+
     var files = [];
+
     while (entries.hasMore()) {
       var filepath = entries.getNext();
       if(filepath.match(/\.app\/.+/)) { continue; }
       files.push(filepath);
     }
+
+    mZipReader.close();
     return files;
   },
 
@@ -137,8 +194,13 @@ var ZipDown = {
     } else {
       mZipReader.extract(path, f);
     }
+    mZipReader.close();
 
     return f;
+  },
+
+  getmZipReader: function() {
+    return;
   },
 
   revealFileFromZip: function(zip, path) {
@@ -184,33 +246,6 @@ var ZipDown = {
     }
   },
 
-  onTreeClicked: function(event){
-    if(event.originalTarget.tagName == "treechildren") {
-      var tree = event.originalTarget.parentNode;
-      if(typeof(tree) == "undefined") { return; }
-
-      var tbo = tree.treeBoxObject;
-
-      // get the row, col and child element at the point
-      var row = { }, col = { }, child = { };
-      tbo.getCellAt(event.clientX, event.clientY, row, col, child);
-      var filename = tree.view.getCellText(row.value, col.value);
-
-      var zipname = tree.parentNode.getAttribute("file");
-
-      ZipDown.openFileFromZip(zipname, filename);
-      event.cancelBubble = true;
-      return false;
-    }
-  },
-
-  ignoreToggle: function(event) {
-    if(event.originalTarget.className == "itemCount" || event.originalTarget.className == "twisty") {
-      event.cancelBubble = true;
-      return false;
-    }
-  },
-
   fileDragObserver: {
     onDragStart: function(event, transferData, action) {
       try {
@@ -223,7 +258,7 @@ var ZipDown = {
 	var path = tree.view.getCellText(row.value, col.value);
 	var zip = tree.parentNode.getAttribute("file");
 
-	var mZipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(nsIZipReader);
+	var mZipReader = ZipDown.getmZipReader();
 	var zipFile = getLocalFileFromNativePathOrUrl(zip);
 	var f = Components.classes["@mozilla.org/file/directory_service;1"].
                 getService(Components.interfaces.nsIProperties).
@@ -233,6 +268,7 @@ var ZipDown = {
 
 	mZipReader.open(zipFile);
 	mZipReader.extract(path, f);
+	mZipReader.close();
 
 	transferData.data = new TransferData();
 
@@ -246,20 +282,6 @@ var ZipDown = {
     var row = document.popupNode._lastSelectedRow;
     var treeChildren = document.popupNode;
     return treeChildren.children[row];
-  },
-
-  cmd_zipfileOpen: function(click) {
-    var treeChild = ZipDown.getClickedTreeChildFromContextMenu();
-    var zipItem = treeChild.parentNode.parentNode.parentNode;
-    var path = treeChild.children[0].children[0].getAttribute("label");
-    ZipDown.openFileFromZip(zipItem.getAttribute("file"), path);
-  },
-
-  cmd_zipfileShow: function(click) {
-    var treeChild = ZipDown.getClickedTreeChildFromContextMenu();
-    var zipItem = treeChild.parentNode.parentNode.parentNode;
-    var path = treeChild.children[0].children[0].getAttribute("label");
-    ZipDown.revealFileFromZip(zipItem.getAttribute("file"), path);
   }
 };
 

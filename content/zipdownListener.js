@@ -20,7 +20,7 @@ ZipdownListener.prototype = {
   onDownloadStateChange: function dlPL_onDownloadStateChange(aState, aDownload)
   {
     var downloadEntry = gDownloadsView.getElementsByAttribute("dlid", aDownload.id)[0];
-    updateExistingItem(downloadEntry);
+    ZipDown.updateExistingItem(downloadEntry);
   },
 
   onProgressChange: function dlPL_onProgressChange(aWebProgress, aRequest,

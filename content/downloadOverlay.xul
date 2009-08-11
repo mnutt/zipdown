@@ -46,8 +46,8 @@
 
   <popupset>
     <popup id="zipfilepopup">
-      <menuitem label="Open" oncommand="ZipDown.cmd_zipfileOpen(this);" />
-      <menuitem label="Show in Finder" oncommand="ZipDown.cmd_zipfileShow(this);" />
+      <menuitem label="Open" oncommand="ZipDown.events.context.zipfileOpen(this);" />
+      <menuitem label="Show in Finder" oncommand="ZipDown.events.context.zipfileShow(this);" />
     </popup>
   </popupset>
 
