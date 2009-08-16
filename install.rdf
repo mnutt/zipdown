@@ -4,7 +4,7 @@
   <Description about="urn:mozilla:install-manifest">
     <em:id>zipdown@nuttnet.net</em:id>
     <em:name>Zip Download Manager</em:name>
-    <em:version>1.0.1</em:version>
+    <em:version>1.1.0</em:version>
     <em:creator>Michael Nutt</em:creator>
     <em:description>View and extract the contents of a compressed download from the download manager.</em:description>
     <em:targetApplication>
