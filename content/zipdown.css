@@ -21,7 +21,7 @@ richlistitem[type="download"][state="1"][expanded="true"] .twisty {
 
 richlistitem[type="download"][state="1"] .itemCount {
   margin: 0 0.3em;
-  font-size: 0.9em;
+  font-size: 1em;
 }
 
 richlistitem[type="download"][state="1"] tree {
@@ -30,8 +30,12 @@ richlistitem[type="download"][state="1"] tree {
 
 richlistitem[type="download"][state="1"][expanded="true"] tree {
   display: -moz-box;
-  margin: 5px -6px -6px -6px;
+  margin: 5px -7px -6px -6px;
   border: 0;
+  -moz-appearance: none;
+  -moz-border-bottom-colors: none;
+  -moz-border-right-colors: none;
+  -moz-border-left-colors: none;
 }
 
 richlistitem[type="download"][state="1"][expanded="true"] tree treecols {
