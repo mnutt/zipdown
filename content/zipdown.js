@@ -9,6 +9,9 @@ var ZipDown = {
       } catch(e) {}
     }
 
+    this.launchFileCallback = this.setupLaunchFileCallback();
+    this.revealFileCallback = this.setupRevealFileCallback();
+
     // Catch new downloads as they appear
     var zipdownListener = new ZipdownListener();
     gDownloadManager.addListener(zipdownListener);
@@ -78,15 +81,23 @@ var ZipDown = {
       zipfileOpen: function(event) {
 	var treeChild = ZipDown.getClickedTreeChildFromContextMenu();
 	var zipItem = treeChild.parentNode.parentNode.parentNode;
-	var path = treeChild.children[0].children[0].getAttribute("label");
-	ZipDown.openFileFromZip(zipItem.getAttribute("file"), path);
+	var path = treeChild.children[0].children[1].getAttribute("label");
+
+	var progressLabel = treeChild.children[0].children[0];
+	ZipDown.startThrobber(progressLabel);
+
+	ZipDown.openFileFromZip(zipItem.getAttribute("file"), path, progressLabel);
       },
 
       zipfileShow: function(event) {
 	var treeChild = ZipDown.getClickedTreeChildFromContextMenu();
 	var zipItem = treeChild.parentNode.parentNode.parentNode;
-	var path = treeChild.children[0].children[0].getAttribute("label");
-	ZipDown.revealFileFromZip(zipItem.getAttribute("file"), path);
+	var path = treeChild.children[0].children[1].getAttribute("label");
+
+	var progressLabel = treeChild.children[0].children[0];
+	ZipDown.startThrobber(progressLabel);
+
+	ZipDown.revealFileFromZip(zipItem.getAttribute("file"), path, progressLabel);
       }
     }
   },
@@ -95,7 +106,14 @@ var ZipDown = {
     var filename = tree.view.getCellText(row.value, col.value);
     var zipname = tree.parentNode.getAttribute("file");
 
-    ZipDown.openFileFromZip(zipname, filename);
+    var progressLabel = tree.getElementsByTagName('treerow')[row.value].children[0];
+    ZipDown.startThrobber(progressLabel);
+
+    ZipDown.openFileFromZip(zipname, filename, progressLabel);
+  },
+
+  startThrobber: function(progressLabel) {
+    progressLabel.setAttribute('src', "chrome://zipdown/skin/throbber.png");
   },
 
   toggleZipList: function(listItem) {
@@ -135,7 +153,7 @@ var ZipDown = {
   createZipItem: function(file) {
     var fileItem = document.getElementById('zipItemTemplate').
                    getElementsByTagName('treeitem')[0].cloneNode(true);
-    var fileCell = fileItem.getElementsByTagName('treecell')[0];
+    var fileCell = fileItem.getElementsByTagName('treecell')[1];
     fileCell.setAttribute('label', file);
     return fileItem;
   },
@@ -149,27 +167,38 @@ var ZipDown = {
     }
   },
 
-  readEntriesFromZip: function(path) {
-    var mZipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(nsIZipReader);
-    var file = getLocalFileFromNativePathOrUrl(path);
-    mZipReader.open(file);
-    var entries = mZipReader.findEntries(null);
+  readEntriesFromZip: function(zipPath, filePattern, sZipReader) {
+    if(typeof(sZipReader) == "undefined") {
+      var mZipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(nsIZipReader);
+      var file = getLocalFileFromNativePathOrUrl(zipPath);
+      mZipReader.open(file);
+    } else {
+      var mZipReader = sZipReader;
+      var alreadyOpen = true;
+    }
+
+    var entries = mZipReader.findEntries(filePattern);
 
     var files = [];
 
     while (entries.hasMore()) {
       var filepath = entries.getNext();
-      if(filepath.match(/\.app\/.+/)) { continue; }
+      if(typeof(filePattern) == "undefined" && filepath.match(/\.app\/.+/)) { continue; }
       files.push(filepath);
     }
 
-    mZipReader.close();
-    return files;
+    if(!alreadyOpen) { mZipReader.close(); }
+    return files.sort();
   },
 
-  getFileFromZip: function(zipPath, filePath) {
-    var mZipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(nsIZipReader);
-    var zipFile = getLocalFileFromNativePathOrUrl(zipPath);
+  getFileFromZip: function(zipPath, filePath, sZipReader) {
+    if(typeof(sZipReader) == "undefined") {
+      var mZipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(nsIZipReader);
+      var zipFile = getLocalFileFromNativePathOrUrl(zipPath);
+    } else {
+      var mZipReader = sZipReader;
+      var alreadyOpen = true;
+    }
 
     var isDirectory = false;
     if(filePath.match(/\/$/)) {
@@ -180,11 +209,18 @@ var ZipDown = {
     var f = Components.classes["@mozilla.org/file/directory_service;1"].
             getService(Components.interfaces.nsIProperties).
             get("TmpD", Components.interfaces.nsILocalFile);
-    f.append(filePath.split('/')[filePath.split('/').length-1]);
+    if(alreadyOpen) { // Is a subfile
+      var pathArray = filePath.split('/');
+      for(var i = 0; i < pathArray.length; i++) {
+	f.append(pathArray[i]);
+      }
+    } else {
+      f.append(filePath.split('/')[filePath.split('/').length-1]);
+    }
 
     // Remove an existing tmp file if it already exists
-    if(f.exists(f.path)) {
-      f.remove(f.path);
+    if(!alreadyOpen && f.exists(f.path)) {
+      f.remove(true);
     }
 
     if(isDirectory) {
@@ -193,96 +229,171 @@ var ZipDown = {
       f.createUnique(Components.interfaces.nsILocalFile.NORMAL_FILE_TYPE, 0666);
     }
 
-    mZipReader.open(zipFile);
+    if(!alreadyOpen) { mZipReader.open(zipFile); }
+
     if(isDirectory) {
       mZipReader.extract(filePath+"/", f);
+      var subFiles = ZipDown.readEntriesFromZip(zipPath, filePath+"/*", mZipReader);
+      subFiles.shift();
+      var depth = filePath.split('/').length + 2;
+
+      for(var i = 0; i < subFiles.length; i++) {
+	if(subFiles[i][subFiles[i]] != '/' && subFiles[i].split('/').length != depth) { continue; }
+	ZipDown.getFileFromZip(zipPath, subFiles[i], mZipReader);
+      }
     } else {
       mZipReader.extract(filePath, f);
     }
-    mZipReader.close();
+
+    if(!alreadyOpen) { mZipReader.close(); }
 
     return f;
   },
 
-  revealFileFromZip: function(zipPath, filePath) {
-    ZipDown.getFileFromZip(zipPath, filePath).reveal();
+  revealFileFromZip: function(zipPath, filePath, progressLabel) {
+    var background = Components.classes["@mozilla.org/thread-manager;1"].getService().newThread(0);
+    var workingThread = ZipDown.setupWorkingThreadCallback(background);
+    background.dispatch(new workingThread(zipPath, filePath, progressLabel, true), background.DISPATCH_NORMAL);
   },
 
-  openFileFromZip: function(zipPath, filePath) {
-    var f = ZipDown.getFileFromZip(zipPath, filePath);
-
-    // Duplicated in downloads.js, unfortunately
-    if (f.isExecutable()) {
-      var dontAsk = false;
-      var pref = Cc["@mozilla.org/preferences-service;1"].
-                 getService(Ci.nsIPrefBranch);
-      try {
-	dontAsk = !pref.getBoolPref(PREF_BDM_ALERTONEXEOPEN);
-      } catch (e) { }
-
-      if (!dontAsk) {
-	var strings = document.getElementById("downloadStrings");
-	var name = aDownload.getAttribute("target");
-	var message = strings.getFormattedString("fileExecutableSecurityWarning", [name, name]);
-
-	let title = gStr.fileExecutableSecurityWarningTitle;
-	let dontAsk = gStr.fileExecutableSecurityWarningDontAsk;
-
-	var promptSvc = Cc["@mozilla.org/embedcomp/prompt-service;1"].
-                        getService(Ci.nsIPromptService);
-	var checkbox = { value: false };
-	var open = promptSvc.confirmCheck(window, title, message, dontAsk, checkbox);
-
-	if (!open)
-          return;
-	pref.setBoolPref(PREF_BDM_ALERTONEXEOPEN, !checkbox.value);
-      }
-    }
-    try {
-      f.launch();
-    } catch (ex) {
-      // if launch fails, try sending it through the system's external
-      // file: URL handler
-      openExternal(f);
-    }
-  },
-
-  fileDragObserver: {
-    onDragStart: function(event, transferData, action) {
-      try {
-	var tree = event.currentTarget;
-	var tbo = tree.treeBoxObject;
-
-	// get the row, col and child element at the point
-	var row = { }, col = { }, child = { };
-	tbo.getCellAt(event.clientX, event.clientY, row, col, child);
-	var path = tree.view.getCellText(row.value, col.value);
-	var zip = tree.parentNode.getAttribute("file");
-
-	var mZipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(nsIZipReader);
-	var zipFile = getLocalFileFromNativePathOrUrl(zip);
-	var f = Components.classes["@mozilla.org/file/directory_service;1"].
-                getService(Components.interfaces.nsIProperties).
-                get("TmpD", Components.interfaces.nsILocalFile);
-	f.append(path.split('/')[path.split('/').length-1]);
-	f.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0666);
-
-	mZipReader.open(zipFile);
-	mZipReader.extract(path, f);
-	mZipReader.close();
-
-	transferData.data = new TransferData();
-
-	event.dataTransfer.mozSetDataAt("application/x-moz-file", f, 0);
-      } catch(e) {
-      }
-    }
+  openFileFromZip: function(zipPath, filePath, progressLabel) {
+    var background = Components.classes["@mozilla.org/thread-manager;1"].getService().newThread(0);
+    var workingThread = ZipDown.setupWorkingThreadCallback(background);
+    background.dispatch(new workingThread(zipPath, filePath, progressLabel), background.DISPATCH_NORMAL);
   },
 
   getClickedTreeChildFromContextMenu: function() {
     var row = document.popupNode._lastSelectedRow;
     var treeChildren = document.popupNode;
     return treeChildren.children[row];
+  },
+
+  setupLaunchFileCallback: function() {
+    var launchFileCallback = function(file, progressLabel) {
+      this.file = file;
+      this.progressLabel = progressLabel;
+    };
+
+    launchFileCallback.prototype = {
+      run: function() {
+	try {
+	  var f = this.file;
+	  this.progressLabel.setAttribute('src', '');
+
+	  // Duplicated in downloads.js, unfortunately
+	  if (f.isExecutable()) {
+	    var dontAsk = false;
+	    var pref = Cc["@mozilla.org/preferences-service;1"].
+                       getService(Ci.nsIPrefBranch);
+	    try {
+	      dontAsk = !pref.getBoolPref(PREF_BDM_ALERTONEXEOPEN);
+	    } catch (e) { }
+
+	    if (!dontAsk) {
+	      var strings = document.getElementById("downloadStrings");
+	      var name = f.leafName;
+	      var message = strings.getFormattedString("fileExecutableSecurityWarning", [name, name]);
+
+	      let title = gStr.fileExecutableSecurityWarningTitle;
+	      let dontAsk = gStr.fileExecutableSecurityWarningDontAsk;
+
+	      var promptSvc = Cc["@mozilla.org/embedcomp/prompt-service;1"].
+                              getService(Ci.nsIPromptService);
+	      var checkbox = { value: false };
+	      var open = promptSvc.confirmCheck(window, title, message, dontAsk, checkbox);
+
+	      if (!open)
+		return;
+	      pref.setBoolPref(PREF_BDM_ALERTONEXEOPEN, !checkbox.value);
+	    }
+	  }
+	  try {
+	    f.launch();
+	  } catch (ex) {
+	    // if launch fails, try sending it through the system's external
+	    // file: URL handler
+	    openExternal(f);
+	  }
+	} catch(err) {
+	  Components.utils.reportError(err);
+	}
+      },
+
+      QueryInterface: function(iid) {
+	if (iid.equals(Components.interfaces.nsIRunnable) ||
+            iid.equals(Components.interfaces.nsISupports)) {
+          return this;
+	}
+	throw Components.results.NS_ERROR_NO_INTERFACE;
+      }
+    };
+    return launchFileCallback;
+  },
+
+  setupRevealFileCallback: function() {
+    var revealFileCallback = function(file, progressLabel) {
+      this.file = file;
+      this.progressLabel = progressLabel;
+    };
+
+    revealFileCallback.prototype = {
+      run: function() {
+	this.progressLabel.setAttribute('src', '');
+	this.file.reveal();
+      },
+
+      QueryInterface: function(iid) {
+	if (iid.equals(Components.interfaces.nsIRunnable) ||
+            iid.equals(Components.interfaces.nsISupports)) {
+          return this;
+	}
+	throw Components.results.NS_ERROR_NO_INTERFACE;
+      }
+    };
+    return revealFileCallback;
+  },
+
+  setupWorkingThreadCallback: function(background) {
+    var workingThread = function(zipPath, filePath, progressLabel, reveal) {
+      this.zipPath = zipPath;
+      this.filePath = filePath;
+      this.progressLabel = progressLabel;
+      this.reveal = reveal;
+    };
+
+    workingThread.prototype = {
+      run: function() {
+	try {
+	  // This is where the working thread does its processing work.
+	  var f = ZipDown.getFileFromZip(this.zipPath, this.filePath);
+
+
+	  // When it's done, call back to the main thread to let it know
+	  // we're finished.
+	  var main = Components.classes["@mozilla.org/thread-manager;1"].getService().mainThread;
+
+
+	  if(this.reveal) {
+	    main.dispatch(new ZipDown.revealFileCallback(f, this.progressLabel),
+			  background.DISPATCH_NORMAL);
+	  } else {
+	    main.dispatch(new ZipDown.launchFileCallback(f, this.progressLabel),
+			  background.DISPATCH_NORMAL);
+	  }
+	} catch(err) {
+	  Components.utils.reportError(err);
+	}
+      },
+
+      QueryInterface: function(iid) {
+	if (iid.equals(Components.interfaces.nsIRunnable) ||
+            iid.equals(Components.interfaces.nsISupports)) {
+          return this;
+	}
+	throw Components.results.NS_ERROR_NO_INTERFACE;
+      }
+    };
+    return workingThread;
   }
 };
 

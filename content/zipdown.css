@@ -42,8 +42,12 @@ richlistitem[type="download"][state="1"][expanded="true"] tree treecols {
   height: 0;
 }
 
+richlistitem[type="download"][state="1"][expanded="true"] tree treecols #progress {
+  width: 20px;
+}
+
 richlistitem[type="download"][state="1"][expanded="true"] tree treechildren::-moz-tree-cell-text {
-  padding-left: 39px;
+  padding-left: 19px;
 }
 
 
