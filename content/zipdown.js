@@ -149,27 +149,38 @@ var ZipDown = {
     }
   },
 
-  readEntriesFromZip: function(path) {
-    var mZipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(nsIZipReader);
-    var file = getLocalFileFromNativePathOrUrl(path);
-    mZipReader.open(file);
-    var entries = mZipReader.findEntries(null);
+  readEntriesFromZip: function(zipPath, filePattern, sZipReader) {
+    if(typeof(sZipReader) == "undefined") {
+      var mZipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(nsIZipReader);
+      var file = getLocalFileFromNativePathOrUrl(zipPath);
+      mZipReader.open(file);
+    } else {
+      var mZipReader = sZipReader;
+      var alreadyOpen = true;
+    }
+
+    var entries = mZipReader.findEntries(filePattern);
 
     var files = [];
 
     while (entries.hasMore()) {
       var filepath = entries.getNext();
-      if(filepath.match(/\.app\/.+/)) { continue; }
+      if(typeof(filePattern) == "undefined" && filepath.match(/\.app\/.+/)) { continue; }
       files.push(filepath);
     }
 
-    mZipReader.close();
-    return files;
+    if(!alreadyOpen) { mZipReader.close(); }
+    return files.sort();
   },
 
-  getFileFromZip: function(zipPath, filePath) {
-    var mZipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(nsIZipReader);
-    var zipFile = getLocalFileFromNativePathOrUrl(zipPath);
+  getFileFromZip: function(zipPath, filePath, sZipReader) {
+    if(typeof(sZipReader) == "undefined") {
+      var mZipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(nsIZipReader);
+      var zipFile = getLocalFileFromNativePathOrUrl(zipPath);
+    } else {
+      var mZipReader = sZipReader;
+      var alreadyOpen = true;
+    }
 
     var isDirectory = false;
     if(filePath.match(/\/$/)) {
@@ -180,7 +191,14 @@ var ZipDown = {
     var f = Components.classes["@mozilla.org/file/directory_service;1"].
             getService(Components.interfaces.nsIProperties).
             get("TmpD", Components.interfaces.nsILocalFile);
-    f.append(filePath.split('/')[filePath.split('/').length-1]);
+    if(alreadyOpen) { // Is a subfile
+      var pathArray = filePath.split('/');
+      for(var i = 0; i < pathArray.length; i++) {
+	f.append(pathArray[i]);
+      }
+    } else {
+      f.append(filePath.split('/')[filePath.split('/').length-1]);
+    }
 
     // Remove an existing tmp file if it already exists
     if(f.exists(f.path)) {
@@ -193,13 +211,22 @@ var ZipDown = {
       f.createUnique(Components.interfaces.nsILocalFile.NORMAL_FILE_TYPE, 0666);
     }
 
-    mZipReader.open(zipFile);
+    if(!alreadyOpen) { mZipReader.open(zipFile); }
+
     if(isDirectory) {
       mZipReader.extract(filePath+"/", f);
+
+      var subFiles = ZipDown.readEntriesFromZip(zipPath, filePath+"/*", mZipReader);
+      subFiles.shift();
+
+      for(var i = 0; i < subFiles.length; i++) {
+	ZipDown.getFileFromZip(zipPath, subFiles[i], mZipReader);
+      }
     } else {
       mZipReader.extract(filePath, f);
     }
-    mZipReader.close();
+
+    if(!alreadyOpen) { mZipReader.close(); }
 
     return f;
   },
