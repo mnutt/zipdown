@@ -81,9 +81,9 @@ var ZipDown = {
       zipfileOpen: function(event) {
 	var treeChild = ZipDown.getClickedTreeChildFromContextMenu();
 	var zipItem = treeChild.parentNode.parentNode.parentNode;
-	var path = treeChild.children[0].children[1].getAttribute("label");
+	var path = treeChild.childNodes[0].childNodes[1].getAttribute("label");
 
-	var progressLabel = treeChild.children[0].children[0];
+	var progressLabel = treeChild.childNodes[0].childNodes[0];
 	ZipDown.startThrobber(progressLabel);
 
 	ZipDown.openFileFromZip(zipItem.getAttribute("file"), path, progressLabel);
@@ -92,9 +92,9 @@ var ZipDown = {
       zipfileShow: function(event) {
 	var treeChild = ZipDown.getClickedTreeChildFromContextMenu();
 	var zipItem = treeChild.parentNode.parentNode.parentNode;
-	var path = treeChild.children[0].children[1].getAttribute("label");
+	var path = treeChild.childNodes[0].childNodes[1].getAttribute("label");
 
-	var progressLabel = treeChild.children[0].children[0];
+	var progressLabel = treeChild.childNodes[0].childNodes[0];
 	ZipDown.startThrobber(progressLabel);
 
 	ZipDown.revealFileFromZip(zipItem.getAttribute("file"), path, progressLabel);
@@ -106,7 +106,7 @@ var ZipDown = {
     var filename = tree.view.getCellText(row.value, col.value);
     var zipname = tree.parentNode.getAttribute("file");
 
-    var progressLabel = tree.getElementsByTagName('treerow')[row.value].children[0];
+    var progressLabel = tree.getElementsByTagName('treerow')[row.value].childNodes[0];
     ZipDown.startThrobber(progressLabel);
 
     ZipDown.openFileFromZip(zipname, filename, progressLabel);
@@ -137,7 +137,7 @@ var ZipDown = {
 
     var files = ZipDown.readEntriesFromZip(item.getAttribute('file'));
 
-    var tree = document.getElementById("zipCollectionTemplate").children[0].cloneNode(true);
+    var tree = document.getElementById("zipCollectionTemplate").childNodes[0].cloneNode(true);
     tree.setAttribute("rows", files.length);
     var treeChildren = tree.getElementsByTagName("treechildren")[0];
 
@@ -151,7 +151,7 @@ var ZipDown = {
 
   // Create a dom node for an item in a zip archive
   createZipItem: function(file) {
-    var fileItem = document.getElementById('zipItemTemplate').
+    var fileItem = window.document.getElementById('zipItemTemplate').
                    getElementsByTagName('treeitem')[0].cloneNode(true);
     var fileCell = fileItem.getElementsByTagName('treecell')[1];
     fileCell.setAttribute('label', file);
@@ -265,7 +265,7 @@ var ZipDown = {
   getClickedTreeChildFromContextMenu: function() {
     var row = document.popupNode._lastSelectedRow;
     var treeChildren = document.popupNode;
-    return treeChildren.children[row];
+    return treeChildren.childNodes[row];
   },
 
   setupLaunchFileCallback: function() {
@@ -290,7 +290,7 @@ var ZipDown = {
 	    } catch (e) { }
 
 	    if (!dontAsk) {
-	      var strings = document.getElementById("downloadStrings");
+	      var strings = window.document.getElementById("downloadStrings");
 	      var name = f.leafName;
 	      var message = strings.getFormattedString("fileExecutableSecurityWarning", [name, name]);
 
