@@ -54,11 +54,11 @@
   <content>
     <!-- A tree containing a list of zip contents -->
     <template id="zipCollectionTemplate">
-      <tree hidecolumnpicker="true" 
-            ondraggesture="nsDragAndDrop.startDrag(event,ZipDown.fileDragObserver);"
+      <tree hidecolumnpicker="true"
             context="zipfilepopup">
     
 	<treecols orient="horizontal">
+	  <treecol label="Progress" id="progress" hideheader="true" />
 	  <treecol label="Files" id="filename" flex="1" hideheader="true" />
 	</treecols>
 	
@@ -77,6 +77,7 @@
 	<treechildren>
 	  <treeitem>
 	    <treerow>
+	      <treecell />
 	      <treecell />
 	    </treerow>
 	  </treeitem>
